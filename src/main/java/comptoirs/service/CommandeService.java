@@ -1,7 +1,9 @@
 package comptoirs.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
+import jakarta.validation.constraints.Null;
 import org.springframework.stereotype.Service;
 
 import comptoirs.dao.ClientRepository;
@@ -42,7 +44,7 @@ public class CommandeService {
         // Si le client a déjà commandé plus de 100 articles, on lui offre une remise de 15%
         // La requête SQL nécessaire est définie dans l'interface ClientRepository
         var nbArticles = clientDao.nombreArticlesCommandesPar(clientCode);
-        if (nbArticles > 100) {
+        if (nbArticles >= 100) {
             nouvelleCommande.setRemise(new BigDecimal("0.15"));
         }
         // On enregistre la commande (génère la clé)
@@ -63,7 +65,25 @@ public class CommandeService {
      */
     @Transactional
     public Commande enregistreExpédition(Integer commandeNum) {
-        // TODO : implémenter ce service métier
-        throw new UnsupportedOperationException("Pas encore implémenté");
+
+        //on vérifie que la commande existe
+        var commande = commandeDao.findById(commandeNum).orElseThrow();
+        //on vérifie que la commande n'a pas déjà été envoyée
+        if(commande.getEnvoyeele() != null)
+        {
+            throw new IllegalArgumentException("la date d'envoi est déjà enregistrée");
+        }
+        // On met à jour la date de livraison
+        commande.setEnvoyeele(LocalDate.now());
+
+        // On met à jour le nombre d'articles dans l'entrepôt
+        var listeLignes = commande.getLignes();
+        for (int i = 0; i < listeLignes.size(); i++) {
+            var ligne = listeLignes.get(i);
+            var produit = ligne.getProduit();
+            var produitsEnStock = produit.getUnitesEnStock() - ligne.getQuantite()  ;
+            produit.setUnitesEnStock(produitsEnStock);
+        }
+        return commande;
     }
 }
