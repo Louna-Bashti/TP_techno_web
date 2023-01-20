@@ -62,7 +62,7 @@ class CommandeServiceTest {
         var ligne = commande.getLignes().get(0);
         assertEquals(100, ligne.getQuantite(), "Il devrait y avoir 100 exemplaires du produit dans la commande");
         var quantite = ligne.getProduit().getUnitesEnStock();
-        assertEquals(17*40, quantite, "la quantité inituale n'est pas la bonne");
+        assertEquals(17, quantite, "la quantité inituale n'est pas la bonne");
         service.enregistreExpédition(commande.getNumero());
         var produit = ligne.getProduit();
         assertEquals(-83, produit.getUnitesEnStock(), "La quantité n'est pas bien décrémentée");
