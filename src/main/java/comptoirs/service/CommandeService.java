@@ -3,6 +3,7 @@ package comptoirs.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import comptoirs.entity.Ligne;
 import jakarta.validation.constraints.Null;
 import org.springframework.stereotype.Service;
 
@@ -71,19 +72,20 @@ public class CommandeService {
         //on vérifie que la commande n'a pas déjà été envoyée
         if(commande.getEnvoyeele() != null)
         {
-            throw new IllegalArgumentException("la date d'envoi est déjà enregistrée");
+            throw new IllegalStateException("la date d'envoi est déjà enregistrée");
         }
         // On met à jour la date de livraison
+
         commande.setEnvoyeele(LocalDate.now());
 
         // On met à jour le nombre d'articles dans l'entrepôt
-        var listeLignes = commande.getLignes();
-        for (int i = 0; i < listeLignes.size(); i++) {
-            var ligne = listeLignes.get(i);
-            var produit = ligne.getProduit();
-            var produitsEnStock = produit.getUnitesEnStock() - ligne.getQuantite()  ;
-            produit.setUnitesEnStock(produitsEnStock);
+
+        for( Ligne l : commande.getLignes()){
+            var produit = l.getProduit();
+            var stock = produit.getUnitesEnStock();
+            produit.setUnitesEnStock(stock - l.getQuantite());
         }
+        // on renvoie la commande
         return commande;
     }
 }

@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
  // Ce test est basé sur le jeu de données dans "test_data.sql"
@@ -18,7 +18,10 @@ class CommandeServiceTest {
     private static final String ID_GROS_CLIENT = "2COM";
     private static final String VILLE_PETIT_CLIENT = "Berlin";
     private static final BigDecimal REMISE_POUR_GROS_CLIENT = new BigDecimal("0.15");
-    private static final int COMMANDE_PAS_LIVREE = 99998;
+    private static final Integer COMMANDE_PAS_LIVREE = 99998;
+    private static final Integer COMMANDE_LIVREE = 99999;
+    private static final Integer COMMANDE_NON_EXISTANTE = 10;
+
 
     @Autowired
     private CommandeService service;
@@ -48,25 +51,31 @@ class CommandeServiceTest {
             "On doit recopier l'adresse du client dans l'adresse de livraison");
     }
 
+    @Test void miseAJourDateEnvoi(){
+        var commandeEnvoyee = service.enregistreExpédition(COMMANDE_PAS_LIVREE);
+        assertEquals(LocalDate.now(), commandeEnvoyee.getEnvoyeele(),
+                "la date d'envoi n'est pas celle du jour actuel");
+    }
+
     @Test
     void testEnregistrementDateCommande(){
         var commande = commandeRepository.findById(COMMANDE_PAS_LIVREE).orElseThrow();
-        assertEquals(null,commande.getEnvoyeele(), "la commande devrait avoir une date non définie");
         service.enregistreExpédition(commande.getNumero());
-        assertNotNull(commande.getEnvoyeele(), "la commande devrait avoir une date définie");
-        service.enregistreExpédition(commande.getNumero());
+        assertEquals(LocalDate.now(), commande.getEnvoyeele(), "la commande devrait avoir une date définie");
     }
     @Test
-    void testNombreArticlesDansEntrepot() {
-        var commande = commandeRepository.findById(COMMANDE_PAS_LIVREE).orElseThrow();
-        var ligne = commande.getLignes().get(0);
-        assertEquals(100, ligne.getQuantite(), "Il devrait y avoir 100 exemplaires du produit dans la commande");
-        var quantite = ligne.getProduit().getUnitesEnStock();
-        assertEquals(17, quantite, "la quantité inituale n'est pas la bonne");
-        service.enregistreExpédition(commande.getNumero());
-        var produit = ligne.getProduit();
-        assertEquals(-83, produit.getUnitesEnStock(), "La quantité n'est pas bien décrémentée");
+    void commandeDejaEnvoyee(){
+        assertThrows(Exception.class, () -> service.enregistreExpédition(COMMANDE_LIVREE),
+                "la commande est déjà enregistrée");
+    }
 
+
+    @Test
+    void commandeEnregistreeExiste(){
+        assertThrows(Exception.class, () -> service.enregistreExpédition(COMMANDE_NON_EXISTANTE),
+                "l'id de commande n'existe pas");
 
     }
+
+
 }

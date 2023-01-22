@@ -44,7 +44,21 @@ public class LigneService {
      *  @return la ligne de commande créée
      */
     @Transactional
-    Ligne ajouterLigne(Integer commandeNum, Integer produitRef, @Positive int quantite) {
-        throw new UnsupportedOperationException("Cette méthode n'est pas implémentée");
+    Ligne ajouterLigne(Integer commandeNum, Integer produitRef, @Positive(message = "le montant doit être positif") int quantite) {
+        //on récupère la commande et le produit commandé en vérifiant leurs existences
+        var commande = commandeDao.findById(commandeNum).orElseThrow();
+        var produit = produitDao.findById(produitRef).orElseThrow();
+        //on vérifie que la commande n'est pas déjà envoyée
+        if (commande.getEnvoyeele() != null){
+            throw new IllegalStateException("La commande est déjà envoyée");
+        }
+        //on vérifie qu'il y a bien assez de produits en stock
+        if(produit.getUnitesEnStock() < quantite){
+            throw new IllegalArgumentException("la quantité commandée est supérieure à celle disponible");
+        }
+        //on enregistre la nouvelle ligne
+        var ligne = new Ligne(commande, produit, quantite);
+        ligneDao.save(ligne);
+        return(ligne);
     }
 }
