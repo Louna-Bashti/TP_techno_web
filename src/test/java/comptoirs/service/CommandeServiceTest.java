@@ -60,9 +60,10 @@ class CommandeServiceTest {
     @Test
     void testEnregistrementDateCommande(){
         var commande = commandeRepository.findById(COMMANDE_PAS_LIVREE).orElseThrow();
-        service.enregistreExpédition(commande.getNumero());
+        commande = service.enregistreExpédition(commande.getNumero());
         assertEquals(LocalDate.now(), commande.getEnvoyeele(), "la commande devrait avoir une date définie");
     }
+
     @Test
     void commandeDejaEnvoyee(){
         assertThrows(Exception.class, () -> service.enregistreExpédition(COMMANDE_LIVREE),
